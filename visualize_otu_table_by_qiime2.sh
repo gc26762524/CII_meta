@@ -78,13 +78,14 @@ MAIN() {
 
 	echo -e "\n#Checking files"
 	check_file $otu_table
-	check_file $meta_file
+	check_file $meta_file	
 
 	echo -e "\n#Setting up the directory structure"
 	echo -e "\n#The output directory prefix is $output_prefix"
 	sample_name=`echo $(basename $otu_table) | sed -e 's/\.txt$//'`
 	output_dir=$(dirname $otu_table)/${sample_name}_Qiime2_output_${output_prefix}/
 	check_dir $output_dir
+	cp $otu_table $output_dir
 
 	echo "##############################################################\n#Generate the figure for the percentage of annotated level"
 	perl ${SCRIPTPATH}/stat_otu_tab.pl -unif min $otu_table -prefix ${output_dir}/Relative/otu_table --even ${output_dir}/Relative/otu_table.even.txt -spestat ${output_dir}/Relative/classified_stat_relative.xls

@@ -64,7 +64,8 @@ while(<IN>){
     chomp;
     my @l = /\t/ ? split /\t/ : split;
     #In case the taxonomy contains a space, which may cause problem in other analysis later.
-    $l[-1] =~ s/\s//g;
+    #For VIH, replace all the spaces to underscore _, because the way of bracken annotation for species.
+    $l[-1] =~ s/\s/_/g;
     #print "AAAAAAAAAAAAA", $l[-1], "\n";
     #print "BBBBBBBBBBBBBBBB", $_, "\n";
     if(!@spe_name){

@@ -24,7 +24,8 @@ my $num_threads = shift @ARGV;
 my $db_path = shift @ARGV;
 my $mode = shift @ARGV;
 my $MEM="50G";
-my $CONFIDENCE=0.155555555;
+my $CONFIDENCE=0.2;
+#my $CONFIDENCE=1;
 
 open (SAMPLES, "<$file_list");
 my $logger = Log::Log4perl->get_logger('Starting kraken wrapper for $file_list');
@@ -55,12 +56,13 @@ MAIN: {
 		    	print "\nTarget directory: $target_dir\n";
 	           	print "\nSample Name : $sample_name\n";
 	            	my $kraken_output =  $target_dir. $sample_name . ".output";
+			my $kraken_report = $target_dir. $sample_name . ".report";
 			#my $CMD = "echo $KRAKEN2_EXEC --db $db_path --confidence 0 --paired $in_fastq1 $in_fastq2 --use-mpa-style --report $kraken_output | qsub -S /bin/bash -V -N $sample_name\_kraken-translate -l h_vmem=$MEM -o $target_dir -e $target_dir";
         		if ($mode eq 'SE'){
-				my $CMD = "echo '$KRAKEN2_EXEC --db $db_path --threads $num_threads --confidence $CONFIDENCE $in_fastq1 > $kraken_output' | qsub -S /bin/bash -V -N $sample_name\_kraken-translate -l h_vmem=$MEM -o $target_dir -e $target_dir -pe smp $num_threads";
+				my $CMD = "echo '$KRAKEN2_EXEC --db $db_path --threads $num_threads --confidence $CONFIDENCE --report $kraken_report $in_fastq1 > $kraken_output' | qsub -S /bin/bash -V -N $sample_name\_kraken-translate -l h_vmem=$MEM -o $target_dir -e $target_dir -pe smp $num_threads";
                                 FileUtils::run_cmd($CMD);
 			}elsif($mode eq 'PE'){
-				my $CMD = "echo '$KRAKEN2_EXEC --db $db_path --threads $num_threads --confidence $CONFIDENCE --paired $in_fastq1 $in_fastq2 > $kraken_output' | qsub -S /bin/bash -V -N $sample_name\_kraken-translate -l h_vmem=$MEM -o $target_dir -e $target_dir -pe smp $num_threads";
+				my $CMD = "echo '$KRAKEN2_EXEC --db $db_path --threads $num_threads --confidence $CONFIDENCE --report $kraken_report --paired $in_fastq1 $in_fastq2 > $kraken_output' | qsub -S /bin/bash -V -N $sample_name\_kraken-translate -l h_vmem=$MEM -o $target_dir -e $target_dir -pe smp $num_threads";
                         	FileUtils::run_cmd($CMD);
 			}else{
 				print "The mode should be either SE or PE, EXIT\n";

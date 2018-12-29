@@ -89,6 +89,7 @@ while(<FH2>){
 		}
 	}
 	close(OFH);
+	%taxa_count=();
 }
 close(FH2);
 
