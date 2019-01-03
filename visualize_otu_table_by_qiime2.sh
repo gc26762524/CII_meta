@@ -4,15 +4,34 @@
 #Please address any bugs to Cheng. 
 #Date 2017.11.31
 #########
-
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 otu_table=$1
-meta_file=$2
-category=$3
+mapping_file=$2
+category_set=${3//,/ }
 output_prefix=$4
 taxa_filtered=$5
 
 frequency=1000
-depth=1000
+depth=$(Rscript $SCRIPTPATH/min.R $otu_table)
+
+echo "Selected depth was $depth"
+
+echo "Check wheather your categories are the following:"
+for i in $category_set;do echo $i;done
+
+
+declare -A tax_aa;
+tax_aa=([k]=Kingdom [p]=Phylum [c]=Class [o]=Order [f]=Family [g]=Genus [s]=Species);
+tax_levels["1"]="Kingdom"
+tax_levels["2"]="Phylum"
+tax_levels["3"]="Class"
+tax_levels["4"]="Order"
+tax_levels["5"]="Family"
+tax_levels["6"]="Genus"
+tax_levels["7"]="Species"
+
+
+
 
 if [ -z "$3" ]; then
 	echo "\n\n"
@@ -33,7 +52,7 @@ else
 	Running: sh $0 $1 $2 $3 $4 $5"
 fi
 
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+
 
 if [ -z ${4+x} ]; then 
         echo "output directory prefix is unset yet but will be auto-valued"
@@ -74,22 +93,25 @@ check_dir() {
 MAIN() {
 
 	echo -e "\n#Enter Qiime2 enviroment"
-	source activate qiime2-2018.8
-
 	echo -e "\n#Checking files"
 	check_file $otu_table
-	check_file $meta_file	
+	check_file $mapping_file
 
 	echo -e "\n#Setting up the directory structure"
 	echo -e "\n#The output directory prefix is $output_prefix"
 	sample_name=`echo $(basename $otu_table) | sed -e 's/\.txt$//'`
 	output_dir=$(dirname $otu_table)/${sample_name}_Qiime2_output_${output_prefix}/
 	check_dir $output_dir
-	cp $otu_table $output_dir
+
+	source activate qiime2-2018.11
 
 	echo "##############################################################\n#Generate the figure for the percentage of annotated level"
+	cp $otu_table ${output_dir}/
 	perl ${SCRIPTPATH}/stat_otu_tab.pl -unif min $otu_table -prefix ${output_dir}/Relative/otu_table --even ${output_dir}/Relative/otu_table.even.txt -spestat ${output_dir}/Relative/classified_stat_relative.xls
+	perl ${SCRIPTPATH}/stat_otu_tab.pl -unif min $otu_table -prefix ${output_dir}/Absolute/otu_table -nomat -abs -spestat exported/Absolute/classified_stat.xls
 	perl ${SCRIPTPATH}/bar_diagram.pl -table ${output_dir}/Relative/classified_stat_relative.xls -style 1 -x_title "Sample Name" -y_title "Sequence Number Percent" -right -textup -rotate='-45' --y_mun 1,7 > ${output_dir}/Relative/Classified_stat_relative.svg
+<<COMMENT1
+COMMENT1
 
 	echo -e "\n#Convert OTU table to biom format"
 	biom convert -i $otu_table -o ${output_dir}/${sample_name}.taxonomy.biom --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy
@@ -100,23 +122,78 @@ MAIN() {
 
 	echo -e "\n#Filter OTU table by taxonomy"
 	qiime taxa filter-table   --i-table ${output_dir}/${sample_name}.count.qza --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza --p-exclude $taxa_filtered --o-filtered-table ${output_dir}/${sample_name}.count.filtered.qza
-	
-	echo -e "\n#Generate barplot"
-	qiime taxa barplot --i-table ${output_dir}/${sample_name}.count.filtered.qza --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza  --m-metadata-file $meta_file --o-visualization ${output_dir}/${sample_name}.taxa-bar-plots.qzv
-	qiime feature-table filter-features --i-table ${output_dir}/${sample_name}.count.filtered.qza   --p-min-frequency $frequency  --o-filtered-table ${output_dir}/${sample_name}.count.filtered.${frequency}.qza
-	qiime taxa barplot --i-table ${output_dir}/${sample_name}.count.filtered.${frequency}.qza --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza  --m-metadata-file $meta_file --o-visualization ${output_dir}/${sample_name}.taxa-bar-plots.${frequency}.qzv
-	
-	echo -e "Conduct non-phylogenetic diversity analysis"
-	qiime diversity core-metrics --i-table ${output_dir}/All.merged.OTU.count.qza  --p-sampling-depth $frequency --m-metadata-file $meta_file  --output-dir ${output_dir}/core-metrics
 
+	echo -e "\n#Generate barplot"
+	qiime taxa barplot --i-table ${output_dir}/${sample_name}.count.filtered.qza --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza  --m-metadata-file $mapping_file --o-visualization ${output_dir}/${sample_name}.taxa-bar-plots.qzv
+	qiime feature-table filter-features --i-table ${output_dir}/${sample_name}.count.filtered.qza   --p-min-frequency $frequency  --o-filtered-table ${output_dir}/${sample_name}.count.filtered.${frequency}.qza
+	qiime taxa barplot --i-table ${output_dir}/${sample_name}.count.filtered.${frequency}.qza --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza  --m-metadata-file $mapping_file --o-visualization ${output_dir}/${sample_name}.taxa-bar-plots.${frequency}.qzv
+
+	echo -e "Conduct non-phylogenetic diversity analysis"
+	qiime diversity core-metrics --i-table ${output_dir}/${sample_name}.count.qza  --p-sampling-depth $depth --m-metadata-file $mapping_file  --output-dir ${output_dir}/core-metrics
+	mkdir ${output_dir}/collapsed
+	mkdir ${output_dir}/Heatmap
 	echo -e "\n#Generate the heatmaps with the OTU (>= $frequency read) at different levels after collapsing."
-	#for n in 2 3 4 5 6 7; do echo $n; qiime taxa collapse   --i-table ${output_dir}/${sample_name}.count.filtered.qza  --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza  --p-level $n  --o-collapsed-table ${output_dir}/${sample_name}-l${n}.qza; qiime feature-table filter-features   --i-table ${output_dir}/${sample_name}-l${n}.qza   --p-min-frequency $frequency  --o-filtered-table ${output_dir}/${sample_name}-l${n}.${frequency}.qza;  qiime feature-table heatmap --i-table ${output_dir}/${sample_name}-l${n}.${frequency}.qza --m-metadata-file $meta_file --m-metadata-column $category --o-visualization ${output_dir}/${sample_name}-l${n}.${frequency}.qzv; done;
+	for n in 2 3 4 5 6 7; 
+		do echo $n; qiime taxa collapse   --i-table ${output_dir}/${sample_name}.count.filtered.qza  --i-taxonomy ${output_dir}/${sample_name}.taxonomy.qza  --p-level $n  --o-collapsed-table ${output_dir}/collapsed/${sample_name}-l${n}.qza;
+		qiime feature-table filter-features   --i-table ${output_dir}/collapsed/${sample_name}-l${n}.qza   --p-min-frequency $frequency  --o-filtered-table ${output_dir}/collapsed/${sample_name}-l${n}.${frequency}.qza;
+		for category_1 in $category_set;
+			do echo $category_1;
+			Rscript ${SCRIPTPATH}/clean_na_of_inputs.R -m $mapping_file --group $category_1 -t ${output_dir}/collapsed/${sample_name}-l${n}.${frequency}.qza -o media_files;
+			qiime feature-table heatmap --i-table media_files/filtered_feature_table.qza --m-metadata-file $mapping_file --m-metadata-column $category_1 --o-visualization ${output_dir}/Heatmap/${category_1}-${tax_levels[${n}]}-${frequency}-heatmap.qzv;
+		done;
+	done;
+
+
+	echo "ANCOM analaysis for differential OTU"
+	mkdir ${output_dir}/ANCOM
+	for n2 in 2 3 4 5 6 7;
+		do echo $n2;
+		for category_1 in $category_set;
+			do echo $category_1;
+				Rscript ${SCRIPTPATH}/clean_na_of_inputs.R -m $mapping_file --group $category_1 -t ${output_dir}/collapsed/${sample_name}-l${n}.qza -o media_files
+				qiime composition add-pseudocount   --i-table media_files/filtered_feature_table.qza  --o-composition-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza;
+				qiime composition ancom  --i-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza --m-metadata-file media_files/cleaned_map.txt --m-metadata-column $category_1 --o-visualization ${output_dir}/ANCOM/${category_1}-ANCOM-${tax_levels[${n2}]}.qzv;
+			done;
+			#qiime composition ancom  --i-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza --m-metadata-file $mapping_file --m-metadata-column $category_2 --o-visualization ${output_dir}/ANCOM/SecondaryGroup/ANCOM.${tax_levels[${n2}]}.qzv;
+	done;
+
+
 
 	echo -e "\n#Generate the distance matrix and visulization artifact (rarefraction depth = $depth)."
-	#qiime diversity core-metrics --i-table ${output_dir}/${sample_name}.count.filtered.qza --p-sampling-depth $depth --m-metadata-file $meta_file --output-dir ${output_dir}/diversity
-
+	#qiime diversity core-metrics --i-table ${output_dir}/${sample_name}.count.filtered.qza --p-sampling-depth $depth --m-metadata-file $mapping_file --output-dir ${output_dir}/diversity
 	echo -e "\n#Exit Qiime2 enviroment"
-	source deactivate
+
+	mv ${output_dir}/Relative/otu_table.p.relative.mat ${output_dir}/Relative/otu_table.Phylum.relative.txt
+	mv ${output_dir}/Relative/otu_table.c.relative.mat ${output_dir}/Relative/otu_table.Class.relative.txt
+	mv ${output_dir}/Relative/otu_table.o.relative.mat ${output_dir}/Relative/otu_table.Order.relative.txt
+	mv ${output_dir}/Relative/otu_table.f.relative.mat ${output_dir}/Relative/otu_table.Family.relative.txt
+	mv ${output_dir}/Relative/otu_table.g.relative.mat ${output_dir}/Relative/otu_table.Genus.relative.txt
+	mv ${output_dir}/Relative/otu_table.s.relative.mat ${output_dir}/Relative/otu_table.Species.relative.txt
+
+	mv ${output_dir}/Absolute/otu_table.p.absolute.mat ${output_dir}/Absolute/otu_table.Phylum.absolute.txt
+	mv ${output_dir}/Absolute/otu_table.c.absolute.mat ${output_dir}/Absolute/otu_table.Class.absolute.txt
+	mv ${output_dir}/Absolute/otu_table.o.absolute.mat ${output_dir}/Absolute/otu_table.Order.absolute.txt
+	mv ${output_dir}/Absolute/otu_table.f.absolute.mat ${output_dir}/Absolute/otu_table.Family.absolute.txt
+	mv ${output_dir}/Absolute/otu_table.g.absolute.mat ${output_dir}/Absolute/otu_table.Genus.absolute.txt
+	mv ${output_dir}/Absolute/otu_table.s.absolute.mat ${output_dir}/Absolute/otu_table.Species.absolute.txt
+
+	for n7 in "Phylum" "Class" "Order" "Family" "Genus" "Species"; 
+		do echo $n7; 
+		perl -lane '$,="\t";pop(@F);print(@F)' ${output_dir}/Relative/otu_table.${n7}.relative.txt > ${output_dir}/Relative/otu_table.${n7}.relative.lastcolumn.txt; 
+		perl ${SCRIPTPATH}/get_table_head2.pl ${output_dir}/Relative/otu_table.${n7}.relative.lastcolumn.txt 20 -trantab > ${output_dir}/Relative/otu_table.${n7}.relative.lastcolumn.trans; 
+		perl ${SCRIPTPATH}/bar_diagram.pl -table ${output_dir}/Relative/otu_table.${n7}.relative.lastcolumn.trans -style 1 -x_title "Sample Name" -y_title "Sequence Number Percent (%)" -right -textup -rotate='-45' --y_mun 0.2,5 --micro_scale --percentage > ${output_dir}/Relative/otu_table.${n7}.relative.svg
+	done;
+	for svg_file in ${output_dir}/Relative/*svg; do echo $svg_file; n=$(basename "$svg_file" .svg); echo $n; rsvg-convert -h 3200 -b white $svg_file > ${output_dir}/Relative/${n}.png; done;
+
+	sed 's/taxonomy/Consensus Lineage/' < $otu_table | sed 's/ConsensusLineage/Consensus Lineage/' > ${output_dir}/feature-table.ConsensusLineage.txt
+	for category_1 in $category_set;
+		do echo $category_1;
+		Rscript ${SCRIPTPATH}/clean_na_of_inputs.R -m $mapping_file --group $category_1 -o media_files
+		map="./media_files/cleaned_map.txt"
+		Rscript ${SCRIPTPATH}/venn_and_flower_plot.R  -i $otu_table -m $mapping_file -c $category_1 -o ${output_dir}/VennAndFlower;
+		Rscript ${SCRIPTPATH}/pcoa_and_nmds.R  -i ${output_dir}/feature-table.ConsensusLineage.txt -m $map -c $category_1 -o ${output_dir}/PCoA-NMDS;
+		done;
+
 
 }
 
