@@ -5,14 +5,14 @@ library(optparse)
 
 #######arguments
 option_list <- list( 
-  make_option(c("-i", "--input"), metavar="path", dest="ORFheader",help="Specify the path of collapsed bacteria table",default=NULL)
+  make_option(c("-i", "--input"), metavar="path", dest="ORFheaderdir",help="Specify the directory containing all the summary files generated",default=NULL)
 )
 
 opt <- parse_args(OptionParser(option_list=option_list,description = "This script is used to draw the summary plots for contigs ORF prediction header file.
                                Usage: Rscript ~/pipeline/Github/CII_meta/ORF_header_summary.R -i ./"))
 #######
 
-setwd(opt$ORFheader)
+setwd(opt$ORFheaderdir)
 lengths_file <- "ORF_lengths.txt"
 gc_conts_file <- "ORF_gc_conts.txt"
 partials_file <- "ORF_partials.txt"
