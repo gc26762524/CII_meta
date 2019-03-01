@@ -1,3 +1,5 @@
+#Sept 18, 2017, Adrian, fixed bug in run_cmd function to check both the success code and the exit code
+
 package FileUtils;
 use strict;
 use warnings;
@@ -68,7 +70,7 @@ sub move_files {
                             print "$desired_file already present in $target_dir\n";
                     } else {
                             my $success = system("mv $file_to_move $target_dir");
-                            check_file($success);
+                            check_status($success);
                     }
             } else {
                     print "File: $file not found\n";
@@ -77,20 +79,12 @@ sub move_files {
 }
 
 #check the return status from system command...
-sub check_file {
-	my $success = $_[0];
-	if($success == -1) {#???Usually if there is an error it may return any number (not just -1)
-		print "Problems moving file\n";
-	} else {
-		print "Successfully moved file\n";
-	}
-}
-
-#check the return status from system command...
 sub check_status {
     my $success = $_[0];
+    my $task = $_[1];
     if($success == 0) {
-            print "Command Successfully Submitted\n";
+    		if($task){print("$task ")};
+            print "task successfully executed (exit code $success)\n";
     } else {
             print "ERROR($success): Command failed\n";
             die;
@@ -152,6 +146,17 @@ sub file_line_counts{
 	return $num_lines;
 }
 
+sub file_gz_line_counts{
+
+	my $file = $_[0];
+
+	my $cmd = "zcat $file | wc -l ";
+	my $num_lines = `$cmd`;
+	chomp($num_lines);
+
+	return $num_lines;
+}
+
 # find latest log file based on job id number, when searched with wildcard in a file name.
 #
 sub find_latest_log{
@@ -170,8 +175,11 @@ sub find_latest_log{
 	#my $latest_log = `ls $log_file | grep $max_job_id 2>/dev/null`;
 	my $latest_log = `ls $log_file 2>/dev/null| grep $max_job_id`;
 	chomp($latest_log);
-	
-	return $latest_log;
+	if (-f $latest_log && -e $latest_log){	
+		return $latest_log;
+	}else{
+		return "none";
+	}
 }
 
 # find oldest log file based on job id number, when searched with wildcard in a file name.
@@ -201,30 +209,31 @@ sub find_oldest_log{
 sub run_cmd {
 
     my $cmd = $_[0];
-    my $task = $_[1];
+    my $task = $_[1]; #this is still under construction
     print "\nRunning command: $cmd\n";
 
     my ($stdout, $stderr, $success, $exit_code) = capture_exec($cmd);
 
-    #print "stdout: $stdout\n";
-    #print "stderr $stderr\n";
-    #print "Success: $success\n";
-    #print "Exit code: $exit_code\n";
+    #For succeful executions, usually success is 1 and exit code is 0
+	#print "stdout: $stdout\n";
+	#print "stderr: $stderr\n";
+	#print "Success: $success\n"; 
+	#print "Exit code: $exit_code\n";
 
-    #
+    if ($exit_code != 0) {die "ERROR($exit_code): Command FAILED: $cmd \n $stderr \n";}
 
     if ($stdout){
         if ($task){ 
-		FileUtils::check_status($exit_code);
-		return $stdout; 
-	} else{
+			FileUtils::check_status($exit_code, $task);
+			return $stdout; 
+		} else{
             my @return_val_string = split (/\s/, $stdout);
             my $job_id = $return_val_string[2];
             print "Running job:$job_id\n";
             return $job_id;   
         }
     } else {
-        #print "No Qsub\n";
+    	FileUtils::check_status($exit_code, $task);
         return 0; 
     }
 }

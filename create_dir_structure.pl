@@ -29,7 +29,9 @@ if (-d $proj){
 	check_dir("Blast");	
 	check_dir("Report");	
 	check_dir("Spreadsheets");	
-	check_dir("Kraken2");	
+	check_dir("Kraken2");
+	check_dir("AMR");
+	check_dir("FMAP");
 
 	#Copy the config.yml file for any new created project directory.
 	my $config_name = "config.yml";
