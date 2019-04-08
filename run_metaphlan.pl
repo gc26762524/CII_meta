@@ -6,10 +6,16 @@ use File::Basename;
 use Log::Log4perl qw(:easy);
 use FileUtils;
 
-my $METAPHLAN_DIR=FileUtils::get_exec ("metaphlandir","./config.yml");
-my $METAPHLAN_EXEC=FileUtils::get_exec ("metaphlan","./config.yml");
-my $BOWTIE_EXEC=FileUtils::get_exec ("bowtie2","./config.yml");
-my $PYTHON_EXEC=FileUtils::get_exec ("python","./config.yml");
+#my $METAPHLAN_DIR=FileUtils::get_exec ("metaphlandir","./config.yml");
+#my $METAPHLAN_EXEC=FileUtils::get_exec ("metaphlan","./config.yml");
+#my $BOWTIE_EXEC=FileUtils::get_exec ("bowtie2","./config.yml");
+#my $PYTHON_EXEC=FileUtils::get_exec ("python","./config.yml");
+my $METAPHLAN_DIR="/home/cheng/softwares/metaphlan2/metaphlan2/";
+my $METAPHLAN_EXEC="/home/cheng/softwares/metaphlan2/metaphlan2/metaphlan2.py";
+my $BOWTIE_EXEC="/home/cheng/softwares/miniconda2/bin/bowtie2";
+my $PYTHON_EXEC="/usr/bin/python";
+
+
 
 
 

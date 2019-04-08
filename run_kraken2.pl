@@ -6,7 +6,9 @@ use File::Basename;
 use Log::Log4perl qw(:easy);
 use FileUtils;
 
-my $KRAKEN2_EXEC=FileUtils::get_exec ("kraken2","./config.yml");
+#my $KRAKEN2_EXEC=FileUtils::get_exec ("kraken2","./config.yml");
+my $KRAKEN2_EXEC="/home/cheng/softwares/kraken2/kraken2/kraken2";
+
 
 unless (scalar @ARGV > 3) {
 	print "\n\n1.Please provide the filtered and host-subtracted R1 fastq file list containing complete path names.\n";

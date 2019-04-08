@@ -4,7 +4,7 @@ package FileUtils;
 use strict;
 use warnings;
 use File::Basename;
-use YAML::Syck;
+#use YAML::Syck;
 use Sys::Hostname;
 use Data::Dumper;
 use IO::CaptureOutput qw/capture_exec/;
@@ -87,7 +87,7 @@ sub check_status {
             print "task successfully executed (exit code $success)\n";
     } else {
             print "ERROR($success): Command failed\n";
-            die;
+            #die;
     }
 }
 

@@ -93,10 +93,10 @@ while(<FH2>){
 close(FH2);
 
 
-my $CMD2 = "${SCRIPT_BASEDIR}/merge_metaphlan_tables.py ${target_dir}*txt > ${target_dir}All.merged.txt";
+my $CMD2 = "${SCRIPT_BASEDIR}/merge_metaphlan_tables.py ${target_dir}*txt > ${target_dir}All.Taxa.txt";
 FileUtils::run_cmd($CMD2);
 
-my $CMD3 = "$PERL ${SCRIPT_BASEDIR}/ConvertmergedMetaphlan2toOTUtable.pl  ${target_dir}All.merged.txt ${target_dir}All.merged.OTU.txt";	
+my $CMD3 = "$PERL ${SCRIPT_BASEDIR}/ConvertmergedMetaphlan2toOTUtable.pl  ${target_dir}All.Taxa.txt ${target_dir}All.Taxa.OTU.txt";	
 FileUtils::run_cmd($CMD3);
 
 #print Dumper(\%taxa_count);

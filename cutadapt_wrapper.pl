@@ -146,9 +146,9 @@ MAIN: {
 		    ($base_dir, $primer_trimmed_dir) = get_primer_trimmed_dir($this_fastq);
             my $resources;
             if (hostname =~ /hpc/) {
-                	$resources="mem=1G,time=23::";
+                	$resources="h_vmem=1G,time=23::";
             	} else {
-                    $resources="mem=1G";
+                    $resources="h_vmem=1G";
            	}
 
 			my $cmd = "echo perl $SCRIPT_BASEDIR/run_cutadapt.pl $this_fastq $adapters_bothEnds_list $adapters_5end_list $adapters_3end_list $overlap_len $minimum_length $disable_rc_trim $discard_untrimmed $kMerLength | qsub -V -N $job_name -l $resources -cwd -o $primer_trimmed_dir -j y";
@@ -338,7 +338,8 @@ sub generate_stats{
 	my $log_files_list=${error_log_dir}."/logs.list";
 	
 	my $resources;
-	$resources="mem=0.1G,time=:10:";
+	#$resources="h_vmem=0.1G,time=:10:";
+	$resources="h_vmem=0.1G";
 
 	#print "Wait 10 seconds to allow file handlers to be closed\n";
 	my $cmd="echo \"sleep 10\" | qsub -hold_jid $holdJobIDs -V -N wait10 -l $resources -cwd -o $error_log_dir/ -j y";

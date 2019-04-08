@@ -55,4 +55,13 @@ cii:
         metaphlan_EXEC: "/share/home/cheng/software/metaphlan2/metaphlan2.py"
         python_EXEC: "/share/data/software/miniconda2/bin/python"
         kraken2_EXEC: "/share/data/software/kraken2/kraken2/kraken2"
+ps-Super-Server:
+        fastqc_EXEC: "~/softwares/fastqc/FastQC/fastqc"
+	cutadapt_EXEC: "/home/cheng/softwares/miniconda2/bin/cutadapt"
+	prinseq_EXEC: "/home/cheng/softwares/miniconda2/bin/prinseq-lite.pl"
+        prinseq_graph_EXEC: "/home/cheng/softwares/miniconda2/bin/prinseq-graphs.pl"
+
 other:
+
+
+

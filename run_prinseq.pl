@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Bio::SeqIO;
+#use Bio::SeqIO;
 use Data::Dumper;
 use File::Basename;
 use Sys::Hostname;
@@ -72,15 +72,17 @@ sub MAIN{
 
 	my $resources;
         if (hostname =~ /hpc/) {
-                $resources="mem=$mem,time=:10:";
+                $resources="h_vmem=$mem,time=:10:";
         } else {
-                $resources="mem=$mem";
+                $resources="h_vmem=$mem";
         }
 
 	print "Running Prinseq,\n";
 
-	my $PRINSEQ_EXEC=FileUtils::get_exec("prinseq","./config.yml");
-	my $PRINSEQ_GRAPH_EXEC=FileUtils::get_exec("prinseq_graph","./config.yml");
+	#my $PRINSEQ_EXEC=FileUtils::get_exec("prinseq","./config.yml");
+	#my $PRINSEQ_GRAPH_EXEC=FileUtils::get_exec("prinseq_graph","./config.yml");
+	my $PRINSEQ_EXEC="/home/cheng/softwares/miniconda2/bin/prinseq-lite.pl";
+        my $PRINSEQ_GRAPH_EXEC="/home/cheng/softwares/miniconda2/bin/prinseq-graphs.pl";
 	my $cmd = "qsub -S /bin/sh \-V \-N $job_name \-l $resources \-cwd \-o $dir \-e $dir -j y run_prinseq.sh $fastq $task $mode $PRINSEQ_EXEC $PRINSEQ_GRAPH_EXEC";
 	#print "$cmd\n";exit;
 	my $job_id = FileUtils::run_cmd($cmd);

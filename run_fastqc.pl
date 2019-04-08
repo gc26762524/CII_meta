@@ -21,8 +21,12 @@ unless (defined $fastq_file) {
 	exit;
 }
 
-my $fastqc_loc = FileUtils::get_exec("fastqc","./config.yml");
-my $java_loc = FileUtils::get_exec("java","./config.yml");
+#my $fastqc_loc = FileUtils::get_exec("fastqc","./config.yml");
+#my $java_loc = FileUtils::get_exec("java","./config.yml");
+my $fastqc_loc = "/home/cheng/softwares/fastqc/FastQC/fastqc";
+my $java_loc = "/usr/bin/java";
+
+
 
 $logger->info("Processing fastq file: $fastq_file\n");
 
@@ -33,7 +37,7 @@ my @sample_names = split(/\./, $this_file);
 my $job_name = $sample_names[0] . "_fastqc";
 my $MEM=QStatMemTracking::qstat_mem_alloc_fastqc($fastq_file,"fastqc");
  
-my $cmd = "echo $fastqc_loc $fastq_file -o $outdir -noextract -t $smp -d $outdir -j $java_loc | qsub -S /bin/sh -V -N $job_name -l h_vmem=$MEM -pe smp $smp -cwd -o $outdir -j y";
+my $cmd = "echo $fastqc_loc $fastq_file -o $outdir -noextract -t $smp -d $outdir -j $java_loc | qsub -S /bin/sh -V -N $job_name -l h_vmem=$MEM -cwd -pe smp $smp -o $outdir -j y";
 #print "Command: $cmd\n";
 
 #my $log = "$outdir/$sample_names[0]" . ".fastqc" . ".log";

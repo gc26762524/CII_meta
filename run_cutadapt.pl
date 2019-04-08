@@ -58,8 +58,8 @@ unless ((defined $this_fastq && $adapters_bothEnds_list && $adapters_5end_list &
 
 $logger->info("Running $0:\n");
 
-#my $cutadapt_loc = "/ifs/scratch/msph/cii/bl2493/Software/cutadapt-1.8.3/bin/cutadapt";
-my $cutadapt_loc = FileUtils::get_exec("cutadapt","./config.yml");
+my $cutadapt_loc = "cutadapt";
+#my $cutadapt_loc = FileUtils::get_exec("cutadapt","./config.yml");
 print "Cutadapt_loc: $cutadapt_loc\n";
 
 my %primers;
@@ -263,7 +263,8 @@ foreach my $adapt_type (keys %primers_order_hash) {
             my $time="06::";
             my $job_name = "$sample_name".".${this_primer_name}".".trimmed_log";
             my $resources;
-	    $resources="mem=$mem,time=$time";
+	    $resources="h_vmem=$mem";
+	    #$resources="h_vmem=$mem,time=$time";
 
             my $cmd = "echo $cutadapt_loc $params --info-file=$info_file $this_fastq -o $out_file | qsub -S /bin/sh -V -N $job_name -l $resources -cwd -o $error_log_dir -j y -sync y";
 

@@ -114,9 +114,9 @@ MAIN: {
 
 		my $resources;
                 if (hostname =~ /hpc/) {
-                        $resources="mem=2G,time=23::";
+                        $resources="h_vmem=2G,time=23::";
                 } else {
-                        $resources="mem=2G";
+                        $resources="h_vmem=2G";
                 }
 
             $cmd = "echo perl run_prinseq.pl $this_fastq $purpose | qsub -V -N $sample_file -l $resources -cwd -o $out_dir -e $out_dir -j y";  

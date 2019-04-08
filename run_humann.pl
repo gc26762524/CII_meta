@@ -68,7 +68,7 @@ MAIN: {
 				print "Invalid mode of sequence. Please, try either SE for Single-end reads & PE for Paired-end reads\n"; exit;
 	    		}	
 	  		#my $CMD = "echo $HUMANN_EXEC --input $input_files --bowtie2 /ifs/home/msph/cii/cg2984/software/bowtie2-2.2.9/ --metaphlan /ifs/home/msph/cii/cg2984/software/metaphlan2/ --diamond /ifs/home/msph/cii/cg2984/.local/bin --output $target_dir$sample_name | qsub -S /bin/bash -V -N $sample_name\_humann -l h_vmem=$MEM -o $target_dir -e $target_dir -j y";
-	   		my $CMD = "echo $HUMANN_EXEC --input $input_files --bowtie2 ~/ --metaphlan /share/home/cheng/software/metaphlan2 --diamond /share/data/software/diamond/v0.8.38 --output $target_dir$sample_name | qsub -S /bin/bash -V -N $sample_name\_humann -l h_vmem=$MEM -o $target_dir -e $target_dir -j y";
+	   		my $CMD = "echo $HUMANN_EXEC --input $input_files --bowtie2 ~/ --metaphlan /share/home/cheng/software/metaphlan2 --diamond /home/cheng/softwares/miniconda2/bin/diamond --output $target_dir$sample_name | qsub -S /bin/bash -V -N $sample_name\_humann -l h_vmem=$MEM -o $target_dir -e $target_dir -j y";
 			print $CMD, "\n";
 			FileUtils::run_cmd($CMD);
 			#my $CMD_2 = "echo rm -r $target_dir$sample_name/*humann2_temp/ | qsub -hold_jid $sample_name\_humann -S /bin/bash -V -N $sample_name\_deletingTemp -l h_vmem=$MEM -o $target_dir -e $target_dir -j y";
