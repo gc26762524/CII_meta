@@ -105,21 +105,20 @@ MAIN() {
 
 
 <<COMMENT1
-
+COMMENT1
 	echo "##############################################################\n#Generate the figure for the percentage of annotated level"
 	cp $otu_table ${output_dir}/
 	perl ${SCRIPTPATH}/stat_otu_tab.pl -unif min $otu_table -prefix ${output_dir}/Relative/otu_table --even ${output_dir}/Relative/otu_table.even.txt -spestat ${output_dir}/Relative/classified_stat_relative.xls
-	perl ${SCRIPTPATH}/stat_otu_tab.pl -unif min $otu_table -prefix ${output_dir}/Absolute/otu_table -nomat -abs -spestat exported/Absolute/classified_stat.xls
+	perl ${SCRIPTPATH}/stat_otu_tab.pl -unif min $otu_table -prefix ${output_dir}/Absolute/otu_table -nomat -abs
 	perl ${SCRIPTPATH}/bar_diagram.pl -table ${output_dir}/Relative/classified_stat_relative.xls -style 1 -x_title "Sample Name" -y_title "Sequence Number Percent" -right -textup -rotate='-45' --y_mun 1,7 > ${output_dir}/Relative/Classified_stat_relative.svg
 
 
-<<COMMENT3
-COMMENT3
+
 	echo -e "\n#Convert OTU table to biom format"
 	biom convert -i $otu_table -o ${output_dir}/${sample_name}.taxonomy.biom --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy
 	#biom convert -i $otu_table -o ${output_dir}/${sample_name}.taxonomy.biom --table-type="OTU table" --process-obs-metadata taxonomy
 
-	source activate qiime2-2019.1
+	source activate qiime2-2020.2
 	echo -e "\n#Generate Qiime2 artifacts"
 	qiime tools import   --input-path ${output_dir}/${sample_name}.taxonomy.biom --type 'FeatureTable[Frequency]'   --input-format BIOMV210Format   --output-path ${output_dir}/${sample_name}.count.qza
 	qiime tools import   --input-path ${output_dir}/${sample_name}.taxonomy.biom --type "FeatureData[Taxonomy]"   --input-format BIOMV210Format   --output-path ${output_dir}/${sample_name}.taxonomy.qza
@@ -147,10 +146,11 @@ COMMENT3
 		for category_1 in $category_set;
 			do echo $category_1;
 			Rscript ${SCRIPTPATH}/clean_na_of_inputs.R -m $mapping_file --group $category_1 -t ${output_dir}/collapsed/${sample_name}-l${n}.${frequency}.qza -o media_files;
-			qiime feature-table heatmap --i-table media_files/filtered_feature_table.qza --m-metadata-file $mapping_file --m-metadata-column $category_1 --o-visualization ${output_dir}/Heatmap/${category_1}-${tax_levels[${n}]}-${frequency}-heatmap.qzv;
+			qiime feature-table heatmap --i-table media_files/filtered_feature_table.qza --m-sample-metadata-file $mapping_file --m-sample-metadata-column $category_1 --o-visualization ${output_dir}/Heatmap/${category_1}-${tax_levels[${n}]}-${frequency}-heatmap.qzv;
 		done;
 	done;
 
+<<COMMENT3
 
 	echo "ANCOM analaysis for differential OTU"
 	mkdir ${output_dir}/ANCOM
@@ -160,11 +160,11 @@ COMMENT3
 			do echo $category_1;
 				Rscript ${SCRIPTPATH}/clean_na_of_inputs.R -m $mapping_file --group $category_1 -t ${output_dir}/collapsed/${sample_name}-l${n}.qza -o media_files
 				qiime composition add-pseudocount   --i-table media_files/filtered_feature_table.qza  --o-composition-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza;
-				qiime composition ancom  --i-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza --m-metadata-file media_files/cleaned_map.txt --m-metadata-column $category_1 --o-visualization ${output_dir}/ANCOM/${category_1}-ANCOM-${tax_levels[${n2}]}.qzv;
+				qiime composition ancom  --i-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza --m-metadata-file media_files/cleaned_map.txt --m-sample-metadata-column $category_1 --o-visualization ${output_dir}/ANCOM/${category_1}-ANCOM-${tax_levels[${n2}]}.qzv;
 			done;
 			#qiime composition ancom  --i-table ${output_dir}/ANCOM/composition.${tax_levels[${n2}]}.qza --m-metadata-file $mapping_file --m-metadata-column $category_2 --o-visualization ${output_dir}/ANCOM/SecondaryGroup/ANCOM.${tax_levels[${n2}]}.qzv;
 	done;
-
+COMMENT3
 
 	echo -e "\n############################################Converting qzv files to html"
 	for f in $(find ${output_dir}/ -type f -name "*.qzv"); do echo $f; base=$(basename $f .qzv); dir=$(dirname $f); new=${dir}/${base}; qiime tools export --input-path $f --output-path ${new}.qzv.exported; done
@@ -201,7 +201,7 @@ COMMENT3
 	done;
 
 	for svg_file in ${output_dir}/Relative/*svg; do echo $svg_file; n=$(basename "$svg_file" .svg); echo $n; rsvg-convert -h 3200 -b white $svg_file > ${output_dir}/Relative/${n}.png; done;
-COMMENT1
+
 
 	for category_1 in $category_set;
 	do echo $category_1;
